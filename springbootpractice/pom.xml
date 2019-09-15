@@ -9,9 +9,10 @@
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 	<groupId>com.why</groupId>
-	<artifactId>springbootdemo</artifactId>
+	<artifactId>springbootpractice</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>springbootdemo</name>
+	<packaging>war</packaging>
+	<name>springbootpractice</name>
 	<description>Demo project for Spring Boot</description>
 
 	<properties>
@@ -21,18 +22,13 @@
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter</artifactId>
-		</dependency>
-
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
+			<artifactId>spring-boot-starter-tomcat</artifactId>
+			<scope>provided</scope>
 		</dependency>
 	</dependencies>
 

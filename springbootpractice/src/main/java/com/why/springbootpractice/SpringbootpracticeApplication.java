@@ -1,13 +1,13 @@
-package com.why.springbootdemo;
+package com.why.springbootpractice;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @SpringBootApplication
-public class SpringbootdemoApplication {
+public class SpringbootpracticeApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(SpringbootdemoApplication.class, args);
+		SpringApplication.run(SpringbootpracticeApplication.class, args);
 	}
 
 }
