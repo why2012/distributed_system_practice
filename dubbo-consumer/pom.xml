@@ -8,12 +8,12 @@
 		<version>2.1.8.RELEASE</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.why</groupId>
-	<artifactId>springbootpractice</artifactId>
+	<groupId>com.why.dubboconsumer</groupId>
+	<artifactId>dubbo-consumer</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<packaging>war</packaging>
-	<name>springbootpractice</name>
-	<description>Demo project for Spring Boot</description>
+	<name>dubbo-consumer</name>
+	<description>dubbo practice</description>
 
 	<properties>
 		<java.version>1.8</java.version>
@@ -31,12 +31,16 @@
 			<!--<scope>runtime</scope>-->
 			<!--<optional>true</optional>-->
 		<!--</dependency>-->
-
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-configuration-processor</artifactId>
+			<optional>true</optional>
 		</dependency>
-
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
 		<dependency>
 			<groupId>com.alibaba</groupId>
 			<artifactId>dubbo</artifactId>
@@ -61,11 +65,7 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
-				<configuration>
-					<fork>true</fork>
-				</configuration>
 			</plugin>
-
 		</plugins>
 	</build>
 

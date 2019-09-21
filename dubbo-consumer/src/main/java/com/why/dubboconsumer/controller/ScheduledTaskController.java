@@ -1,7 +1,12 @@
-package com.why.springbootpractice.controllers;
+package com.why.dubboconsumer.controller;
+
+/**
+ * Created by wanghaiyang on 2019/9/19.
+ */
 
 import com.why.springbootpractice.provider.DemoProvider;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
 import java.text.SimpleDateFormat;
@@ -17,7 +22,7 @@ public class ScheduledTaskController {
     @Autowired
     DemoProvider demoProvider;
 
-    //@Scheduled(fixedRate = 2000)
+    @Scheduled(fixedRate = 2000)
     public void reportCurrentTime() {
         System.out.println(demoProvider.say("CurrentTime: " + dateFormat.format(new Date())));
     }
