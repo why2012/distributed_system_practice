@@ -7,6 +7,7 @@ import org.springframework.stereotype.Service;
 public class DemoProviderImpl implements DemoProvider {
     @Override
     public String say(String name) {
+        System.out.println("Got rpc request: " + name);
         return "Get back: " + name;
     }
 }

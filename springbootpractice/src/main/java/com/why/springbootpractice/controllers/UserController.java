@@ -23,7 +23,7 @@ public class UserController {
         c.set(c.DAY_OF_MONTH, 19);
         User user = new User();
         user.setName("Ethan");
-        user.setAge(25);
+        user.setAge(23);
         user.setBirthday(c.getTime());
         user.setPassword("123456");
         user.setDesc("This is Ethan's user pojo");
