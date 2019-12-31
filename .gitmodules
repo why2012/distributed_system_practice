@@ -1,3 +1,3 @@
 [submodule "coding-201"]
-	path = coding-201
+	path = coding-zk
 	url = ssh://git@git.imooc.com:80/coding-201/coding-201.git
