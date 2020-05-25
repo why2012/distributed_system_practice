@@ -1,0 +1,86 @@
+﻿邮件的基础信息可以是结构化的，但是内容必然是非结构化的，还有如word文档，
+日志数据顺序扫描找一个文件，一个文档接一个文档，从头到尾，检查每个字符，知道扫描完所有文件。
+几十个G的文本数据将非结构化数据结构化，建立索引，可以提高搜索速度全文索引类似于一部字典，
+包含两个不同的索引与一个数据区块，拼音和部首检字表。没有，顺序检索，有，
+可以按拼音、声母、韵母、部首偏旁灵活的得到每个字的页数
+Lucene的Term index和Term Dictionary其实对应的就是MySQL的B+Tree的功能，
+为关键字key提供索引。Lucene的inverted index可以比MySQL的b-tree检索更快。
+在 Mysql中给两个字段独立建立的索引无法联合起来使用，必须对联合查询的场景建立复合索引，
+而Lucene可以任何AND或者OR组合使用索引进行检索。
+Term index在内存中是以FST（finite state transducers）的形式保存的，其特点是非常节省内存。
+所以Lucene搜索一个关键字key的速度是非常快的，而MySQL的B+Tree需要读磁盘比较。
+Term dictionary在磁盘上是以分block的方式保存的，一个block内部利用公共前缀压缩，
+比如都是Ab开头的单词就可以把Ab省去。这样Term dictionary可以比B-tree更节约磁盘空间。
+Lucene对不同的数据类型采用了不同的索引方式，上面分析是针对field为字符串的，
+比如针对int，有geohash，针对经纬度，就可以用GeoHash编码。
+
+顺序扫描速度慢，因为数据存储的格式，与我们搜索的信息格式不一致。
+如果根据文档编号查询文档内容就很快。但是根据词语查询文档编号就很慢。
+文档检索恰恰是根据内容查文档编号1、查找到term位置 2、取出lucene的倒排表 3、找到text的倒排表4、
+合并两个倒排表字典是排好序的方便做存储优化针对搜索语句，
+词语也会经过同样的转化为了减小索引文件的大小，Lucene对索引还使用了压缩技术。关键词压缩为<前缀长度，后缀>
+
+Finite State Transducers 简称 FST， 有限状态转换器。在自然语言处理等领域有很大应用。
+目前Lucene4.0在查找Term时就用到了该算法来确定此Term在字典中的位置。
+FST 可以表示成FST<Key, Value>的形式，我们可以用O（length（key））的复杂度，找到key所对应的值。
+除此之外，FST 还支持用Value来查找key以及查找Value最优的key等功能。
+
+lucene也可以自行组合查询对象，完成复杂查询TokenManager会进行操作符提取和识别，
+并进行语法分析Analyzer负责进行分词和去除停用词，
+词根化stopwords:"a", "an", "and", "are", "as", "at", "be", "but", "by","for", "if", "in", "into", "is"
+
+指向两个链表的最小节点，每次比较两个指针所指向节点的值，将值比较小的节点加到新的链表中，然后更新指针，如此循环往复直到到达一个链表的尾部
+
+避免文档内容重复最大的问题不是检索出包含关键字的文档，而是从这些文档中搜索出我们想要的那几个关键字
+
+termN：项在文档内出现的次数 docTermN：文档的项的总数docN：文档总数 termDocN：出现该项的文档总数
+tf·idf-sim ： tfidf 向量相似度此PPT中Lucene一词出现的很多，说明ppt跟lucene相关。
+在一篇英文文档中this is，出现次数多，但这几个词反而不重要因此需要idf来修正tf的计算结果，
+this在大多数文档中都会出现，说明该词的区分度不大，因此idf数值低，不重要价值在于不可替代性，
+工作也是如此tf * idf ^2 更加突出idf的重要性
+
+词频用于衡量单个词语对于文档的重要程度，出现次数越多，词语对于文档越重要逆文档频率用于衡量词语在所有文档中的重要程度，出现该词语的文档数越多，该词语的区分度越小，越不重要log = ln e 以e为底的自然对数vsm分数
+
+新创建的段对IndexReader既不可视也不可用。IndexReader不会看到新创建段中的任何内容。直到IndexWriter提交索引，且IndexReader重新打开刷新操作用来释放被缓存的更改，提交操作用来让所有更改在索引中保持可见
+
+避免文件描述符达到使用上限 tieredMergePolicy：将段从大到小排列索引倾斜：
+size of largest segment divided by smallest segmentmerges with lower skew, smaller size and those reclaiming more deletes, are favored.Merge any segments with deleted documents. I/O would go through the roof and indexing (and querying while merging) performance would plummet. In the worst case scenario you would rewrite your entire index after deleting 0.01% of your documents.Reclaim the data from the segments when documents were deleted. Unfortunately that would be equivalent to rewriting the entire index. These are very complex structures and just reaching in and deleting the information associated with one doc is prohibitively expensive.
+
+从头开始，选择一个值最大的段，然后将此段的值减去0.75(LEVEL_LOG_SPAN) ，之间的段被认为是大小差不多的段，
+属于同一阶梯，此处称为第一阶梯。然后从后向前寻找第一个属于第一阶梯的段，
+从start到此段之间的段都被认为是属于这一阶梯的。也包括之间生成较早但大小较小的段，
+因为考虑到以下几点：防止较早生成的段由于人工flush或者人工调整ramBufferSize，因而很小，却破坏了基本从大到小的规则。
+如果运行较长时间后，致使段的大小参差不齐，很难合并相同大小的段。也防止一个段由于较小，
+而不断的都有大的段生成从而始终不能参与合并。第一阶梯总共4个段，小于mergeFactor因而不合并，
+接着start=end从而选择下一阶梯。  LogMergePolicy总是合并相邻的段文件，对于IndexWriter提供的段集合，
+LogMergePolicy会选取连续的段集区间来生成一个OneMerge。  TieredMergePolicy会将IndexWriter提供的段集进行排序，
+在排序后的段集中选取部分（可能不连续）的段来生成一个OneMerge。
+
+新创建的段对IndexReader既不可视也不可用。IndexReader不会看到新创建段中的任何内容。
+直到IndexWriter提交索引，且IndexReader重新打开刷新操作用来释放被缓存的更改，
+提交操作用来让所有更改在索引中保持可见所有针对writer的变更要么全部提交至索引，
+要么全不提交，没有中间状态索引必须是连续的，索引数据与添加、删除操作保持一致索引变更时，
+其他搜索程序无法感知，只有当索引提交后，且搜索程序重新打开索引，
+才能看到新内容已提交的索引数据不会因为外部原因而丢失传统的UNIX实现在内核中设有缓冲区高速缓存或页面高速缓存，
+大多数磁盘I/O都通过缓冲进行。当将数据写入文件时，内核通常先将该数据复制到其中一个缓冲区中，
+如果该缓冲区尚未写满，则并不将其排入输出队列，而是等待其写满或者当内核需要重用该缓冲区以便存放其他磁盘块数据时，
+再将该缓冲排入输出队列，然后待其到达队首时，才进行实际的I/O操作。
+这种输出方式被称为延迟写（delayed write）（Bach [1986]第3章详细讨论了缓冲区高速缓存）。
+延迟写减少了磁盘读写次数，但是却降低了文件内容的更新速度，使得欲写到文件中的数据在一段时间内并没有写到磁盘上。
+当系统发生故障时，这种延迟可能造成文件更新内容的丢失。为了保证磁盘上实际文件系统与缓冲区高速缓存中内容的一致性，
+UNIX系统提供了sync、fsync和fdatasync三个函数。sync函数只是将所有修改过的块缓冲区排入写队列
+然后就返回，它并不等待实际写磁盘操作结束。通常称为update的系统守护进程会周期性地（一般每隔30秒）调用sync函数。
+这就保证了定期冲洗内核的块缓冲区。命令sync(1)也调用sync函数。fsync函数只对由文件描述符filedes指定的单一文件起作用，
+并且等待写磁盘操作结束，然后返回。fsync可用于数据库这样的应用程序，这种应用程序需要确保将修改过的块立即写到磁盘上。
+fdatasync函数类似于fsync，但它只影响文件的数据部分。而除数据外，fsync还会同步更新文件的属性。
+
+BKD树是二叉树和B+树的组合。比较特殊的是，内部node必须是一个完全二叉树，而叶子node存储的则和K-D-B树一模一样。
+这个树是K-D树和 B+ Tree树的结合体。像标准的K-D树一样，一个内部的node把空间切分成几个不同的区域。
+和K-D树不一样的是，内部node不是包含的点。空间里的区域由2个点来定义，一个点是各个维度最小位置，
+而另一个定义了各个维度最大的位置因为BKD树被组织成B树一样，所以在磁盘上可以工作的很好。
+随着每个node有更多的扇出，node会更大，相对来说树也就更浅。通常来说，磁盘延迟较大，但是吞吐很高。
+也就是说读取大块的数据和读取小块的数据耗费的时间成本是差不多的，大块数据是一个优势。
+更浅的深度也意味着更少的非本地读。通常我们把node的大小设置的至少和page(4KB)大小一样, 或者是成倍的关系
+。正因为如此，一个node可以包含数百的点。和其他B树的变种一样，也要求是平衡的。当然这是通过插入操作来保证的。
+插入一个元素到叶子上，如果叶子没有满，直接插入。如果叶子满了，就进行切分。不像你想的那样，来增加树的深度，
+而是增加一个新的兄弟节点来解决。如果一个区域node满了，那就有一点复杂了。有一些特点减轻了二叉树在磁盘上的使用难度。因为这是一个完全二叉树，node不需要存储到它们子node的指针，直接使用乘法就可以了。假如一个node的位置在i，那这个node的左node在位置2i，右node在2i+1。既然叶子节点包含所有点数据，node不需要包含它们自己的任何数据。更小的node，意味着更多的数据可以存储在缓存内。大量的点数据存储在节点内，也降低了树的深度。
