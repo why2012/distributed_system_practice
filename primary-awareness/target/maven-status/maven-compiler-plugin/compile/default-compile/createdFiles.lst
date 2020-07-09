@@ -1,0 +1,2 @@
+org\elasticsearch\primaryaware\PrimaryAwarenessPlugin.class
+org\elasticsearch\cluster\routing\allocation\decider\PrimaryAwarenessAllocationDecider.class
