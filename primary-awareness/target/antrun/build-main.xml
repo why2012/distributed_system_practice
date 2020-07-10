@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<project name="maven-antrun-" default="main"  >
+<target name="main">
+  <copy todir="D:/桌面/ES/workspace/es-home-alpha/plugins/primary-awareness-7.7.0" overwrite="true">
+    <fileset dir="D:\桌面\ES\workspace\primary-awareness\target/releases/primary-awareness-7.7.0"></fileset>
+  </copy>
+  <copy todir="D:/桌面/ES/workspace/es-home-beta/plugins/primary-awareness-7.7.0" overwrite="true">
+    <fileset dir="D:\桌面\ES\workspace\primary-awareness\target/releases/primary-awareness-7.7.0"></fileset>
+  </copy>
+  <copy todir="D:/桌面/ES/workspace/es-home-gamma/plugins/primary-awareness-7.7.0" overwrite="true">
+    <fileset dir="D:\桌面\ES\workspace\primary-awareness\target/releases/primary-awareness-7.7.0"></fileset>
+  </copy>
+</target>
+</project>

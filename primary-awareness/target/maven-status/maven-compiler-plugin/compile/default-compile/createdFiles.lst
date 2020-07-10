@@ -1,0 +1,9 @@
+org\elasticsearch\cluster\routing\allocation\decider\PrimaryAwarenessSettingUpdateListener.class
+org\elasticsearch\primaryaware\PrimaryAwarenessPlugin$PrimaryAwarenessSettingStore.class
+org\elasticsearch\primaryaware\PrimaryForceswapTrigger.class
+org\elasticsearch\primaryaware\PrimaryAwarenessPlugin.class
+org\elasticsearch\cluster\routing\allocation\decider\PrimaryAwarenessAllocationDecider.class
+org\elasticsearch\primaryaware\ShardRoutingHelper.class
+org\elasticsearch\primaryaware\PrimaryForceswap.class
+org\elasticsearch\primaryaware\PrimarySwapClusterStateTaskExecutor.class
+org\elasticsearch\primaryaware\PrimarySwapClusterStateTaskExecutor$Task.class

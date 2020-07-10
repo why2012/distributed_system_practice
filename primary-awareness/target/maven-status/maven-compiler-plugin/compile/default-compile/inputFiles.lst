@@ -1,0 +1,7 @@
+D:\桌面\ES\workspace\primary-awareness\src\main\java\org\elasticsearch\primaryaware\ShardRoutingHelper.java
+D:\桌面\ES\workspace\primary-awareness\src\main\java\org\elasticsearch\primaryaware\PrimaryAwarenessPlugin.java
+D:\桌面\ES\workspace\primary-awareness\src\main\java\org\elasticsearch\primaryaware\PrimaryForceswapTrigger.java
+D:\桌面\ES\workspace\primary-awareness\src\main\java\org\elasticsearch\primaryaware\PrimaryForceswap.java
+D:\桌面\ES\workspace\primary-awareness\src\main\java\org\elasticsearch\primaryaware\PrimarySwapClusterStateTaskExecutor.java
+D:\桌面\ES\workspace\primary-awareness\src\main\java\org\elasticsearch\cluster\routing\allocation\decider\PrimaryAwarenessSettingUpdateListener.java
+D:\桌面\ES\workspace\primary-awareness\src\main\java\org\elasticsearch\cluster\routing\allocation\decider\PrimaryAwarenessAllocationDecider.java

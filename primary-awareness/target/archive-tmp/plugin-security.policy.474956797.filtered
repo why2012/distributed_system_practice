@@ -1,0 +1,10 @@
+grant {
+  permission java.lang.RuntimePermission "createClassLoader";
+  permission java.lang.RuntimePermission "getClassLoader";
+  permission java.lang.RuntimePermission "accessDeclaredMembers";
+  permission java.lang.reflect.ReflectPermission "suppressAccessChecks";
+  permission java.net.SocketPermission "*", "connect";
+  permission java.util.PropertyPermission "es.allow_insecure_settings", "read,write";
+  permission org.elasticsearch.ThreadPermission "modifyArbitraryThreadGroup";
+  permission java.lang.RuntimePermission "setDefaultUncaughtExceptionHandler";
+};
