@@ -7,6 +7,7 @@ import org.elasticsearch.cluster.RestoreInProgress;
 import org.elasticsearch.cluster.metadata.IndexMetaData;
 import org.elasticsearch.cluster.metadata.MetaData;
 import org.elasticsearch.cluster.routing.*;
+import org.elasticsearch.cluster.routing.allocation.AllocationService;
 import org.elasticsearch.cluster.routing.allocation.RoutingAllocation;
 import org.elasticsearch.common.collect.ImmutableOpenMap;
 
@@ -21,12 +22,14 @@ public class PrimaryForceswap {
     private ClusterState clusterState;
     private RoutingNodes routingNodes;
     private RoutingAllocation allocation;
+    private AllocationService allocationService;
     private final String primaryAwareAttribute;
     private final String primaryAwareAttributeValue;
 
-    public PrimaryForceswap(ClusterState currentClusterState, final String primaryAwareAttribute,
-                            final String primaryAwareAttributeValue, Logger logger) {
+    public PrimaryForceswap(ClusterState currentClusterState, AllocationService allocationService,
+                            final String primaryAwareAttribute, final String primaryAwareAttributeValue, Logger logger) {
         this.clusterState = currentClusterState;
+        this.allocationService = allocationService;
         this.routingNodes = getMutableRoutingNodes(currentClusterState);
         this.allocation = new RoutingAllocation(null, routingNodes, clusterState, null, currentNanoTime());
         this.primaryAwareAttribute = primaryAwareAttribute;
@@ -41,6 +44,10 @@ public class PrimaryForceswap {
 
         if (allocation.routingNodesChanged()) {
             newClusterState = buildResult(clusterState, allocation);
+        }
+
+        if (this.allocationService != null) {
+            return this.allocationService.reroute(newClusterState, "primary force swap");
         }
 
         return newClusterState;

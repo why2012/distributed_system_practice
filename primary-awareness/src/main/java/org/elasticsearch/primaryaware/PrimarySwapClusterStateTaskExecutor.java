@@ -5,8 +5,7 @@ import org.apache.logging.log4j.message.ParameterizedMessage;
 import org.elasticsearch.cluster.ClusterState;
 import org.elasticsearch.cluster.ClusterStateTaskExecutor;
 import org.elasticsearch.cluster.ClusterStateTaskListener;
-import org.elasticsearch.cluster.coordination.NodeRemovalClusterStateTaskExecutor;
-import org.elasticsearch.cluster.node.DiscoveryNode;
+import org.elasticsearch.cluster.routing.allocation.AllocationService;
 
 import java.util.List;
 
@@ -19,6 +18,7 @@ public class PrimarySwapClusterStateTaskExecutor implements ClusterStateTaskExec
 
         private final String primaryAwareAttribute;
         private final String primaryAwareAttributeValue;
+        private AllocationService allocationService;
         private final String reason;
 
         public Task(final String primaryAwareAttribute, final String primaryAwareAttributeValue, final String reason) {
@@ -27,11 +27,21 @@ public class PrimarySwapClusterStateTaskExecutor implements ClusterStateTaskExec
             this.reason = reason;
         }
 
+        public Task(AllocationService allocationService, final String primaryAwareAttribute,
+                    final String primaryAwareAttributeValue, final String reason) {
+            this(primaryAwareAttribute, primaryAwareAttributeValue, reason);
+            this.allocationService = allocationService;
+        }
+
         public String primaryAwareAttribute() {
             return primaryAwareAttribute;
         }
 
         public String primaryAwareAttributeValue() {return primaryAwareAttributeValue;}
+
+        public AllocationService getAllocationService() {
+            return allocationService;
+        }
 
         public String reason() {
             return reason;
@@ -48,9 +58,11 @@ public class PrimarySwapClusterStateTaskExecutor implements ClusterStateTaskExec
     }
 
     @Override
-    public ClusterTasksResult<PrimarySwapClusterStateTaskExecutor.Task> execute(ClusterState currentState, List<PrimarySwapClusterStateTaskExecutor.Task> tasks) throws Exception {
+    public ClusterTasksResult<PrimarySwapClusterStateTaskExecutor.Task> execute(ClusterState currentState,
+                                                                                List<PrimarySwapClusterStateTaskExecutor.Task> tasks) throws Exception {
         final ClusterTasksResult.Builder<PrimarySwapClusterStateTaskExecutor.Task> resultBuilder = ClusterTasksResult.<PrimarySwapClusterStateTaskExecutor.Task>builder().successes(tasks);
-        ClusterState newClusterState = new PrimaryForceswap(currentState, tasks.get(0).primaryAwareAttribute,
+        ClusterState newClusterState = new PrimaryForceswap(currentState, tasks.get(0).allocationService,
+                tasks.get(0).primaryAwareAttribute,
                 tasks.get(0).primaryAwareAttributeValue, logger).forceSwap();
         return resultBuilder.build(newClusterState);
     }
