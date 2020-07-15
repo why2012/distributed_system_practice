@@ -4,9 +4,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.elasticsearch.action.ActionRequest;
 import org.elasticsearch.action.ActionResponse;
-import org.elasticsearch.primaryaware.action.bulk.TransportAsyncBulkAction;
 import org.elasticsearch.client.Client;
-import org.elasticsearch.cluster.coordination.Coordinator;
 import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.node.DiscoveryNodes;
 import org.elasticsearch.cluster.routing.allocation.decider.AllocationDecider;
@@ -19,17 +17,18 @@ import org.elasticsearch.common.settings.*;
 import org.elasticsearch.common.xcontent.NamedXContentRegistry;
 import org.elasticsearch.env.Environment;
 import org.elasticsearch.env.NodeEnvironment;
-import org.elasticsearch.primaryaware.action.bulk.AsyncBulkAction;
 import org.elasticsearch.plugins.ActionPlugin;
 import org.elasticsearch.plugins.ClusterPlugin;
 import org.elasticsearch.plugins.Plugin;
 import org.elasticsearch.primaryaware.action.PrimaryShardSwapAction;
 import org.elasticsearch.primaryaware.action.TransportPrimaryShardSwapAction;
+import org.elasticsearch.primaryaware.action.bulk.AsyncBulkAction;
+import org.elasticsearch.primaryaware.action.bulk.TransportAsyncBulkAction;
 import org.elasticsearch.primaryaware.action.bulk.TransportAsyncShardBulkAction;
 import org.elasticsearch.primaryaware.rest.RestPrimaryShardSwapAction;
+import org.elasticsearch.primaryaware.rest.bulk.RestAsyncBulkAction;
 import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestHandler;
-import org.elasticsearch.primaryaware.rest.bulk.RestAsyncBulkAction;
 import org.elasticsearch.script.ScriptService;
 import org.elasticsearch.threadpool.ThreadPool;
 import org.elasticsearch.watcher.ResourceWatcherService;
@@ -41,7 +40,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 public class PrimaryAwarenessPlugin extends Plugin implements ActionPlugin, ClusterPlugin {
-    private static final Logger logger = LogManager.getLogger(Coordinator.class);
+    private static final Logger logger = LogManager.getLogger(PrimaryAwarenessPlugin.class);
     public static final Setting<Boolean> CLUSTER_ROUTING_ALLOCATION_PRIMARY_AWARENESS_FORCESWAP =
             Setting.boolSetting("cluster.routing.allocation.awareness.primary.forceswap", false,
                     Setting.Property.Dynamic, Setting.Property.NodeScope);
@@ -72,8 +71,8 @@ public class PrimaryAwarenessPlugin extends Plugin implements ActionPlugin, Clus
             return Collections.emptyList();
         }
         return Arrays.asList(
-                new RestPrimaryShardSwapAction(primaryAwarenessSettingStore),
-                new RestAsyncBulkAction(settings));
+                new RestPrimaryShardSwapAction(settings, restController, primaryAwarenessSettingStore),
+                new RestAsyncBulkAction(settings, restController));
     }
 
     @Override
@@ -100,8 +99,7 @@ public class PrimaryAwarenessPlugin extends Plugin implements ActionPlugin, Clus
     public Collection<Object> createComponents(Client client, ClusterService clusterService, ThreadPool threadPool,
                                                ResourceWatcherService resourceWatcherService, ScriptService scriptService,
                                                NamedXContentRegistry xContentRegistry, Environment environment,
-                                               NodeEnvironment nodeEnvironment, NamedWriteableRegistry namedWriteableRegistry,
-                                               IndexNameExpressionResolver indexNameExpressionResolver) {
+                                               NodeEnvironment nodeEnvironment, NamedWriteableRegistry namedWriteableRegistry) {
         this.clusterService = clusterService;
         primaryForceswapTrigger = new PrimaryForceswapTrigger(clusterService, primarySwapClusterStateTaskExecutor, logger);
         return Collections.emptyList();

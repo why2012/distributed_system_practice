@@ -36,8 +36,16 @@ public class ReflectionUtils {
     }
 
     public static <T> T invokeMethod(Object target, String methodName, Class[] argTypes, Object... args) {
+        return invokeMethod(target.getClass(), target, methodName, argTypes, args);
+    }
+
+    public static <T> T invokeSuperMethod(Object target, String methodName, Class[] argTypes, Object... args) {
+        return invokeMethod(target.getClass().getSuperclass(), target, methodName, argTypes, args);
+    }
+
+    public static <T> T invokeMethod(Class clazz, Object target, String methodName, Class[] argTypes, Object... args) {
         try {
-            Method method = target.getClass().getDeclaredMethod(methodName, argTypes);
+            Method method = clazz.getDeclaredMethod(methodName, argTypes);
             if (method == null) {
                 throw new Exception("target: " + target + " doesn't has method: " + methodName);
             }

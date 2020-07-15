@@ -1,14 +1,45 @@
 <?xml version="1.0" encoding="UTF-8" ?>
 <project name="maven-antrun-" default="main"  >
 <target name="main">
-  <copy todir="D:/桌面/ES/workspace/es-home-alpha/plugins/primary-awareness-7.7.0" overwrite="true">
-    <fileset dir="D:\桌面\ES\workspace\primary-awareness\target/releases/primary-awareness-7.7.0"></fileset>
-  </copy>
-  <copy todir="D:/桌面/ES/workspace/es-home-beta/plugins/primary-awareness-7.7.0" overwrite="true">
-    <fileset dir="D:\桌面\ES\workspace\primary-awareness\target/releases/primary-awareness-7.7.0"></fileset>
-  </copy>
-  <copy todir="D:/桌面/ES/workspace/es-home-gamma/plugins/primary-awareness-7.7.0" overwrite="true">
-    <fileset dir="D:\桌面\ES\workspace\primary-awareness\target/releases/primary-awareness-7.7.0"></fileset>
-  </copy>
+  <taskdef resource="net/sf/antcontrib/antcontrib.properties" classpathref="maven.runtime.classpath"/>
+  <if>
+    <and>
+      <isset property="plugin.install.dirs.alpha"></isset>
+      <not>
+        <equals arg2="" arg1="E:/elasticsearch/elasticsearch-7.3.2-cluster/elasticsearch-7.3.2-node1/plugins"/>
+      </not>
+    </and>
+    <then>
+      <copy todir="E:/elasticsearch/elasticsearch-7.3.2-cluster/elasticsearch-7.3.2-node1/plugins/primary-awareness-7.3.2" overwrite="true">
+        <fileset dir="D:\桌面\ES\workspace\primary-awareness\target/releases/primary-awareness-7.3.2"></fileset>
+      </copy>
+    </then>
+  </if>
+  <if>
+    <and>
+      <isset property="plugin.install.dirs.beta"></isset>
+      <not>
+        <equals arg2="" arg1="E:/elasticsearch/elasticsearch-7.3.2-cluster/elasticsearch-7.3.2-node2/plugins"/>
+      </not>
+    </and>
+    <then>
+      <copy todir="E:/elasticsearch/elasticsearch-7.3.2-cluster/elasticsearch-7.3.2-node2/plugins/primary-awareness-7.3.2" overwrite="true">
+        <fileset dir="D:\桌面\ES\workspace\primary-awareness\target/releases/primary-awareness-7.3.2"></fileset>
+      </copy>
+    </then>
+  </if>
+  <if>
+    <and>
+      <isset property="plugin.install.dirs.gamma"></isset>
+      <not>
+        <equals arg2="" arg1="E:/elasticsearch/elasticsearch-7.3.2-cluster/elasticsearch-7.3.2-node3/plugins"/>
+      </not>
+    </and>
+    <then>
+      <copy todir="E:/elasticsearch/elasticsearch-7.3.2-cluster/elasticsearch-7.3.2-node3/plugins/primary-awareness-7.3.2" overwrite="true">
+        <fileset dir="D:\桌面\ES\workspace\primary-awareness\target/releases/primary-awareness-7.3.2"></fileset>
+      </copy>
+    </then>
+  </if>
 </target>
 </project>

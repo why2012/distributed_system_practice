@@ -25,7 +25,6 @@ import org.elasticsearch.index.seqno.SequenceNumbers;
 import org.elasticsearch.index.shard.ReplicationGroup;
 import org.elasticsearch.index.shard.ShardId;
 import org.elasticsearch.node.NodeClosedException;
-import org.elasticsearch.primaryaware.PrimaryAwarenessPlugin;
 import org.elasticsearch.rest.RestStatus;
 
 import java.io.IOException;
@@ -69,6 +68,7 @@ public class AsyncReplicationOperation<
 
     private final String primaryAwarenessAttribute;
     private final String primaryAwarenessAttributeValue;
+    private final boolean primaryAwareDisabled;
     private HashMap<String/* nodeId */, String /*value*/> nodeIdToAttributeValue = new HashMap<>();
 
     public AsyncReplicationOperation(Request request, Primary<Request, ReplicaRequest, PrimaryResultT> primary,
@@ -86,6 +86,11 @@ public class AsyncReplicationOperation<
         this.primaryTerm = primaryTerm;
         this.primaryAwarenessAttribute = primaryAwarenessAttribute;
         this.primaryAwarenessAttributeValue = primaryAwarenessAttributeValue;
+        if (StringUtils.isEmpty(primaryAwarenessAttribute) || StringUtils.isEmpty(primaryAwarenessAttributeValue)) {
+            this.primaryAwareDisabled = true;
+        } else {
+            this.primaryAwareDisabled = false;
+        }
         buildNodeAttrMapping(clusterService.state());
     }
 
@@ -191,7 +196,7 @@ public class AsyncReplicationOperation<
         totalShards.incrementAndGet();
         // 只计算主机房分片
         String shardNodeAttributeValue = nodeIdToAttributeValue.get(shard.currentNodeId());
-        if (StringUtils.equalsIgnoreCase(shardNodeAttributeValue, primaryAwarenessAttributeValue)) {
+        if (primaryAwareDisabled || StringUtils.equalsIgnoreCase(shardNodeAttributeValue, primaryAwarenessAttributeValue)) {
             pendingActions.incrementAndGet();
         }
         replicasProxy.performOn(shard, replicaRequest, primaryTerm, globalCheckpoint, maxSeqNoOfUpdatesOrDeletes,
@@ -296,7 +301,7 @@ public class AsyncReplicationOperation<
     }
 
     private void decPendingAndFinishIfNeeded(String shardNodeAttributeValue) {
-        if (StringUtils.equalsIgnoreCase(shardNodeAttributeValue, primaryAwarenessAttributeValue)) {
+        if (primaryAwareDisabled || StringUtils.equalsIgnoreCase(shardNodeAttributeValue, primaryAwarenessAttributeValue)) {
             decPendingAndFinishIfNeeded();
         }
     }

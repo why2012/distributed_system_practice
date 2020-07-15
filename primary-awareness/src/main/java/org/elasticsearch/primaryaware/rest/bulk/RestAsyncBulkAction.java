@@ -11,6 +11,7 @@ import org.elasticsearch.common.logging.DeprecationLogger;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.mapper.MapperService;
 import org.elasticsearch.rest.BaseRestHandler;
+import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestStatusToXContentListener;
 import org.elasticsearch.rest.action.document.RestBulkAction;
@@ -32,20 +33,17 @@ public class RestAsyncBulkAction extends BaseRestHandler {
     public static final String TYPES_DEPRECATION_MESSAGE = "[types removal]" +
             " Specifying types in bulk requests is deprecated.";
 
-    public RestAsyncBulkAction(Settings settings) {
+    public RestAsyncBulkAction(Settings settings, RestController controller) {
+        super(settings);
         this.allowExplicitIndex = MULTI_ALLOW_EXPLICIT_INDEX.get(settings);
-    }
+        controller.registerHandler(POST, "/_async_bulk", this);
+        controller.registerHandler(PUT, "/_async_bulk", this);
+        controller.registerHandler(POST, "/{index}/_async_bulk", this);
+        controller.registerHandler(PUT, "/{index}/_async_bulk", this);
 
-    @Override
-    public List<Route> routes() {
-        return unmodifiableList(asList(
-                new Route(POST, "/_async_bulk"),
-                new Route(PUT, "/_async_bulk"),
-                new Route(POST, "/{index}/_async_bulk"),
-                new Route(PUT, "/{index}/_async_bulk"),
-                // Deprecated typed endpoints.
-                new Route(POST, "/{index}/{type}/_async_bulk"),
-                new Route(PUT, "/{index}/{type}/_async_bulk")));
+        // Deprecated typed endpoints.
+        controller.registerHandler(POST, "/{index}/{type}/_async_bulk", this);
+        controller.registerHandler(PUT, "/{index}/{type}/_async_bulk", this);
     }
 
     @Override
@@ -80,11 +78,6 @@ public class RestAsyncBulkAction extends BaseRestHandler {
 
     @Override
     public boolean supportsContentStream() {
-        return true;
-    }
-
-    @Override
-    public boolean allowsUnsafeBuffers() {
         return true;
     }
 }

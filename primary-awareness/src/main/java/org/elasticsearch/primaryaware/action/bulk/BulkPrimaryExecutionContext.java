@@ -57,7 +57,7 @@ class BulkPrimaryExecutionContext {
     private Translog.Location locationToSync = null;
     private int currentIndex = -1;
 
-    private BulkPrimaryExecutionContext.ItemProcessingState currentItemState;
+    private ItemProcessingState currentItemState;
     private DocWriteRequest requestToExecute;
     private BulkItemResponse executionResult;
     private int retryCounter;
@@ -72,9 +72,9 @@ class BulkPrimaryExecutionContext {
 
     private int findNextNonAborted(int startIndex) {
         final int length = request.items().length;
-
-        while (startIndex < length && isAborted(ReflectionUtils.invokeMethod(request.items()[startIndex],
-                "getPrimaryResponse", new Class[]{}, new Object[]{}))) {
+        while (startIndex < length && isAborted(
+                ReflectionUtils.invokeMethod(request.items()[startIndex], "getPrimaryResponse",
+                        new Class[]{}, new Object[]{}))) {
             startIndex++;
         }
         return startIndex;
@@ -86,14 +86,14 @@ class BulkPrimaryExecutionContext {
 
     /** move to the next item to execute */
     private void advance() {
-        assert currentItemState == BulkPrimaryExecutionContext.ItemProcessingState.COMPLETED || currentIndex == -1 :
+        assert currentItemState == ItemProcessingState.COMPLETED || currentIndex == -1 :
                 "moving to next but current item wasn't completed (state: " + currentItemState + ")";
-        currentItemState = BulkPrimaryExecutionContext.ItemProcessingState.INITIAL;
+        currentItemState = ItemProcessingState.INITIAL;
         currentIndex =  findNextNonAborted(currentIndex + 1);
         retryCounter = 0;
         requestToExecute = null;
         executionResult = null;
-        assert assertInvariants(BulkPrimaryExecutionContext.ItemProcessingState.INITIAL);
+        assert assertInvariants(ItemProcessingState.INITIAL);
     }
 
     /** gets the current, untranslated item request */
@@ -107,7 +107,7 @@ class BulkPrimaryExecutionContext {
 
     /** returns the result of the request that has been executed on the shard */
     public BulkItemResponse getExecutionResult() {
-        assert assertInvariants(BulkPrimaryExecutionContext.ItemProcessingState.EXECUTED);
+        assert assertInvariants(ItemProcessingState.EXECUTED);
         return executionResult;
     }
 
@@ -118,17 +118,17 @@ class BulkPrimaryExecutionContext {
 
     /** returns true if the current request has been executed on the primary */
     public boolean isOperationExecuted() {
-        return currentItemState == BulkPrimaryExecutionContext.ItemProcessingState.EXECUTED;
+        return currentItemState == ItemProcessingState.EXECUTED;
     }
 
     /** returns true if the request needs to wait for a mapping update to arrive from the master */
     public boolean requiresWaitingForMappingUpdate() {
-        return currentItemState == BulkPrimaryExecutionContext.ItemProcessingState.WAIT_FOR_MAPPING_UPDATE;
+        return currentItemState == ItemProcessingState.WAIT_FOR_MAPPING_UPDATE;
     }
 
     /** returns true if the current request should be retried without waiting for an external event */
     public boolean requiresImmediateRetry() {
-        return currentItemState == BulkPrimaryExecutionContext.ItemProcessingState.IMMEDIATE_RETRY;
+        return currentItemState == ItemProcessingState.IMMEDIATE_RETRY;
     }
 
     /**
@@ -136,14 +136,14 @@ class BulkPrimaryExecutionContext {
      * facing response
      */
     public boolean isCompleted() {
-        return currentItemState == BulkPrimaryExecutionContext.ItemProcessingState.COMPLETED;
+        return currentItemState == ItemProcessingState.COMPLETED;
     }
 
     /**
      * returns true if the current request is in INITIAL state
      */
     public boolean isInitial() {
-        return currentItemState == BulkPrimaryExecutionContext.ItemProcessingState.INITIAL;
+        return currentItemState == ItemProcessingState.INITIAL;
     }
 
     /**
@@ -164,7 +164,7 @@ class BulkPrimaryExecutionContext {
     public Translog.Location getLocationToSync() {
         assert hasMoreOperationsToExecute() == false;
         // we always get to the end of the list by using advance, which in turn sets the state to INITIAL
-        assert assertInvariants(BulkPrimaryExecutionContext.ItemProcessingState.INITIAL);
+        assert assertInvariants(ItemProcessingState.INITIAL);
         return locationToSync;
     }
 
@@ -182,47 +182,47 @@ class BulkPrimaryExecutionContext {
      * received from the user (specifically, an update request is translated to an indexing or delete request).
      */
     public void setRequestToExecute(DocWriteRequest writeRequest) {
-        assert assertInvariants(BulkPrimaryExecutionContext.ItemProcessingState.INITIAL);
+        assert assertInvariants(ItemProcessingState.INITIAL);
         requestToExecute = writeRequest;
-        currentItemState = BulkPrimaryExecutionContext.ItemProcessingState.TRANSLATED;
-        assert assertInvariants(BulkPrimaryExecutionContext.ItemProcessingState.TRANSLATED);
+        currentItemState = ItemProcessingState.TRANSLATED;
+        assert assertInvariants(ItemProcessingState.TRANSLATED);
     }
 
     /** returns the request that should be executed on the shard. */
     public <T extends DocWriteRequest<T>> T getRequestToExecute() {
-        assert assertInvariants(BulkPrimaryExecutionContext.ItemProcessingState.TRANSLATED);
+        assert assertInvariants(ItemProcessingState.TRANSLATED);
         return (T) requestToExecute;
     }
 
     /** indicates that the current operation can not be completed and needs to wait for a new mapping from the master */
     public void markAsRequiringMappingUpdate() {
-        assert assertInvariants(BulkPrimaryExecutionContext.ItemProcessingState.TRANSLATED);
-        currentItemState = BulkPrimaryExecutionContext.ItemProcessingState.WAIT_FOR_MAPPING_UPDATE;
+        assert assertInvariants(ItemProcessingState.TRANSLATED);
+        currentItemState = ItemProcessingState.WAIT_FOR_MAPPING_UPDATE;
         requestToExecute = null;
-        assert assertInvariants(BulkPrimaryExecutionContext.ItemProcessingState.WAIT_FOR_MAPPING_UPDATE);
+        assert assertInvariants(ItemProcessingState.WAIT_FOR_MAPPING_UPDATE);
     }
 
     /** resets the current item state, prepare for a new execution */
     public void resetForExecutionForRetry() {
-        assertInvariants(BulkPrimaryExecutionContext.ItemProcessingState.WAIT_FOR_MAPPING_UPDATE, ItemProcessingState.EXECUTED);
-        currentItemState = BulkPrimaryExecutionContext.ItemProcessingState.INITIAL;
+        assertInvariants(ItemProcessingState.WAIT_FOR_MAPPING_UPDATE, ItemProcessingState.EXECUTED);
+        currentItemState = ItemProcessingState.INITIAL;
         requestToExecute = null;
         executionResult = null;
-        assertInvariants(BulkPrimaryExecutionContext.ItemProcessingState.INITIAL);
+        assertInvariants(ItemProcessingState.INITIAL);
     }
 
     /** completes the operation without doing anything on the primary */
     public void markOperationAsNoOp(DocWriteResponse response) {
-        assertInvariants(BulkPrimaryExecutionContext.ItemProcessingState.INITIAL);
+        assertInvariants(ItemProcessingState.INITIAL);
         executionResult = new BulkItemResponse(getCurrentItem().id(), getCurrentItem().request().opType(), response);
-        currentItemState = BulkPrimaryExecutionContext.ItemProcessingState.EXECUTED;
-        assertInvariants(BulkPrimaryExecutionContext.ItemProcessingState.EXECUTED);
+        currentItemState = ItemProcessingState.EXECUTED;
+        assertInvariants(ItemProcessingState.EXECUTED);
     }
 
     /** indicates that the operation needs to be failed as the required mapping didn't arrive in time */
     public void failOnMappingUpdate(Exception cause) {
-        assert assertInvariants(BulkPrimaryExecutionContext.ItemProcessingState.WAIT_FOR_MAPPING_UPDATE);
-        currentItemState = BulkPrimaryExecutionContext.ItemProcessingState.EXECUTED;
+        assert assertInvariants(ItemProcessingState.WAIT_FOR_MAPPING_UPDATE);
+        currentItemState = ItemProcessingState.EXECUTED;
         final DocWriteRequest docWriteRequest = getCurrentItem().request();
         executionResult = new BulkItemResponse(getCurrentItem().id(), docWriteRequest.opType(),
                 // Make sure to use getCurrentItem().index() here, if you use docWriteRequest.index() it will use the
@@ -233,7 +233,7 @@ class BulkPrimaryExecutionContext {
 
     /** the current operation has been executed on the primary with the specified result */
     public void markOperationAsExecuted(Engine.Result result) {
-        assertInvariants(BulkPrimaryExecutionContext.ItemProcessingState.TRANSLATED);
+        assertInvariants(ItemProcessingState.TRANSLATED);
         final BulkItemRequest current = getCurrentItem();
         DocWriteRequest docWriteRequest = getRequestToExecute();
         switch (result.getResultType()) {
@@ -262,26 +262,26 @@ class BulkPrimaryExecutionContext {
                         // use docWriteRequest.index() it will use the
                         // concrete index instead of an alias if used!
                         new BulkItemResponse.Failure(request.index(), docWriteRequest.type(), docWriteRequest.id(),
-                                result.getFailure(), result.getSeqNo(), result.getTerm()));
+                                result.getFailure(), result.getSeqNo()));
                 break;
             default:
                 throw new AssertionError("unknown result type for " + getCurrentItem() + ": " + result.getResultType());
         }
-        currentItemState = BulkPrimaryExecutionContext.ItemProcessingState.EXECUTED;
+        currentItemState = ItemProcessingState.EXECUTED;
     }
 
     /** finishes the execution of the current request, with the response that should be returned to the user */
     public void markAsCompleted(BulkItemResponse translatedResponse) {
-        assertInvariants(BulkPrimaryExecutionContext.ItemProcessingState.EXECUTED);
+        assertInvariants(ItemProcessingState.EXECUTED);
         assert executionResult != null && translatedResponse.getItemId() == executionResult.getItemId();
         assert translatedResponse.getItemId() == getCurrentItem().id();
 
         if (translatedResponse.isFailed() == false && requestToExecute != null && requestToExecute != getCurrent())  {
             request.items()[currentIndex] = new BulkItemRequest(request.items()[currentIndex].id(), requestToExecute);
         }
-        ReflectionUtils.<Void>invokeMethod(getCurrentItem(), "setPrimaryResponse",
+        ReflectionUtils.invokeMethod(getCurrentItem(), "setPrimaryResponse",
                 new Class[]{BulkItemResponse.class}, new Object[]{translatedResponse});
-        currentItemState = BulkPrimaryExecutionContext.ItemProcessingState.COMPLETED;
+        currentItemState = ItemProcessingState.COMPLETED;
         advance();
     }
 
@@ -289,12 +289,12 @@ class BulkPrimaryExecutionContext {
     public BulkShardResponse buildShardResponse() {
         assert hasMoreOperationsToExecute() == false;
         return new BulkShardResponse(request.shardId(),
-                Arrays.stream(request.items()).
-                        map(v -> ReflectionUtils.invokeMethod(v, "getPrimaryResponse",
+                Arrays.stream(request.items()).map((request) ->
+                        ReflectionUtils.invokeMethod(request, "getPrimaryResponse",
                                 new Class[]{}, new Object[]{})).toArray(BulkItemResponse[]::new));
     }
 
-    private boolean assertInvariants(BulkPrimaryExecutionContext.ItemProcessingState... expectedCurrentState) {
+    private boolean assertInvariants(ItemProcessingState... expectedCurrentState) {
         assert Arrays.asList(expectedCurrentState).contains(currentItemState):
                 "expected current state [" + currentItemState + "] to be one of " + Arrays.toString(expectedCurrentState);
         assert currentIndex >= 0 : currentIndex;
@@ -323,11 +323,10 @@ class BulkPrimaryExecutionContext {
             case COMPLETED:
                 assert requestToExecute != null;
                 assert executionResult != null;
-                assert ReflectionUtils.<BulkItemResponse>invokeMethod(getCurrentItem(), "getPrimaryResponse",
+                assert ReflectionUtils.invokeMethod(getCurrentItem(), "getPrimaryResponse",
                         new Class[]{}, new Object[]{}) != null;
                 break;
         }
         return true;
     }
 }
-

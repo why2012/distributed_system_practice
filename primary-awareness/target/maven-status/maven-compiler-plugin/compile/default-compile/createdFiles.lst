@@ -14,16 +14,15 @@ org\elasticsearch\primaryaware\PrimaryAwarenessPlugin.class
 org\elasticsearch\primaryaware\action\bulk\TransportAsyncBulkAction$ConcreteIndices.class
 org\elasticsearch\primaryaware\action\support\replication\TransportAsyncReplicationAction$ReroutePhase$1.class
 org\elasticsearch\primaryaware\utils\ReflectionUtils.class
-org\elasticsearch\primaryaware\action\bulk\TransportAsyncBulkAction$3.class
 org\elasticsearch\primaryaware\action\bulk\TransportAsyncShardBulkAction$4.class
 org\elasticsearch\primaryaware\action\bulk\TransportAsyncBulkAction$1.class
 org\elasticsearch\primaryaware\action\bulk\TransportAsyncShardBulkAction$2.class
 org\elasticsearch\primaryaware\action\support\replication\TransportAsyncWriteAction$WriteActionReplicasProxy.class
 org\elasticsearch\primaryaware\action\support\replication\TransportAsyncReplicationAction$PrimaryShardReference.class
 org\elasticsearch\primaryaware\action\support\replication\TransportAsyncReplicationAction$ReplicaResult.class
+org\elasticsearch\primaryaware\action\support\replication\TransportAsyncReplicationAction$AsyncReplicaAction$ResponseListener.class
 org\elasticsearch\primaryaware\action\support\replication\TransportAsyncWriteAction.class
 org\elasticsearch\primaryaware\action\support\replication\TransportAsyncReplicationAction$AsyncPrimaryAction.class
-org\elasticsearch\primaryaware\action\support\replication\TransportAsyncWriteAction$WritePrimaryResult$1.class
 org\elasticsearch\primaryaware\action\support\replication\TransportAsyncReplicationAction$ConcreteReplicaRequest.class
 org\elasticsearch\primaryaware\action\PrimaryShardSwapAction$PrimaryShardSwapResponse.class
 org\elasticsearch\primaryaware\action\PrimaryShardSwapAction.class
@@ -31,6 +30,7 @@ org\elasticsearch\primaryaware\action\bulk\TransportAsyncBulkAction$BulkOperatio
 org\elasticsearch\primaryaware\ShardRoutingHelper.class
 org\elasticsearch\primaryaware\action\support\replication\TransportAsyncReplicationAction$ConcreteShardRequest.class
 org\elasticsearch\primaryaware\action\support\replication\TransportAsyncReplicationAction$ReroutePhase.class
+org\elasticsearch\primaryaware\action\bulk\TransportAsyncShardBulkAction$ReplicaItemExecutionMode.class
 org\elasticsearch\primaryaware\action\support\replication\AsyncReplicationOperation$Primary.class
 org\elasticsearch\primaryaware\action\TransportPrimaryShardSwapAction.class
 org\elasticsearch\primaryaware\action\support\replication\TransportAsyncReplicationAction$ReplicaResponse.class
@@ -40,11 +40,9 @@ org\elasticsearch\primaryaware\action\bulk\AsyncBulkAction.class
 org\elasticsearch\primaryaware\action\support\replication\TransportAsyncReplicationAction$ReroutePhase$2.class
 org\elasticsearch\primaryaware\action\support\replication\TransportAsyncWriteAction$1.class
 org\elasticsearch\primaryaware\PrimaryForceswap.class
-org\elasticsearch\primaryaware\action\support\replication\TransportAsyncWriteAction$WriteReplicaResult$1.class
 org\elasticsearch\primaryaware\action\bulk\BulkPrimaryExecutionContext$ItemProcessingState.class
 org\elasticsearch\primaryaware\action\support\replication\TransportAsyncWriteAction$WriteReplicaResult.class
 org\elasticsearch\primaryaware\action\support\replication\TransportAsyncReplicationAction$AsyncPrimaryAction$1.class
-org\elasticsearch\primaryaware\action\bulk\TransportAsyncShardBulkAction$2$1.class
 org\elasticsearch\primaryaware\action\bulk\BulkPrimaryExecutionContext.class
 org\elasticsearch\primaryaware\action\support\replication\AsyncReplicationOperation.class
 org\elasticsearch\primaryaware\action\PrimaryShardSwapAction$PrimaryShardSwapRequest.class

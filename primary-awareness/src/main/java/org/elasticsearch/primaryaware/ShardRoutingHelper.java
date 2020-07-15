@@ -3,17 +3,18 @@ package org.elasticsearch.primaryaware;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.elasticsearch.cluster.coordination.Coordinator;
 import org.elasticsearch.cluster.node.DiscoveryNode;
-import org.elasticsearch.cluster.routing.*;
+import org.elasticsearch.cluster.routing.RoutingChangesObserver;
+import org.elasticsearch.cluster.routing.RoutingNodes;
+import org.elasticsearch.cluster.routing.ShardRouting;
+import org.elasticsearch.cluster.routing.UnassignedInfo;
 
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.Comparator;
 
 public class ShardRoutingHelper {
-    private static final Logger logger = LogManager.getLogger(Coordinator.class);
+    private static final Logger logger = LogManager.getLogger(ShardRoutingHelper.class);
 
     private final ShardRouting targetShard;
     private RoutingNodes routingNodes;

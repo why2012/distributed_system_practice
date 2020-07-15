@@ -41,6 +41,11 @@ public class TransportPrimaryShardSwapAction extends TransportMasterNodeAction<P
     }
 
     @Override
+    protected PrimaryShardSwapResponse newResponse() {
+        return new PrimaryShardSwapResponse();
+    }
+
+    @Override
     protected PrimaryShardSwapResponse read(StreamInput in) throws IOException {
         return new PrimaryShardSwapResponse(in);
     }

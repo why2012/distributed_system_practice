@@ -60,8 +60,7 @@ public class PrimaryForceswap {
             final IndexMetaData indexMetaData = allocation.metaData().getIndexSafe(waitSwapShard.index());
             boolean delayed = INDEX_DELAYED_NODE_LEFT_TIMEOUT_SETTING.get(indexMetaData.getSettings()).nanos() > 0;
             UnassignedInfo unassignedInfo = new UnassignedInfo(UnassignedInfo.Reason.MANUAL_ALLOCATION, "primary force swap [" + node.nodeId() + "]",
-                    null, 0, allocation.getCurrentNanoTime(), System.currentTimeMillis(), delayed, UnassignedInfo.AllocationStatus.NO_ATTEMPT,
-                    Collections.emptySet());
+                    null, 0, allocation.getCurrentNanoTime(), System.currentTimeMillis(), delayed, UnassignedInfo.AllocationStatus.NO_ATTEMPT);
             unassignPrimaryAndPromoteActiveReplicaIfExists(waitSwapShard, unassignedInfo);
         }
     }
