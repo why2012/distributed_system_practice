@@ -7,11 +7,9 @@ import org.elasticsearch.action.support.ActionFilters;
 import org.elasticsearch.action.support.TransportActions;
 import org.elasticsearch.action.support.WriteRequest;
 import org.elasticsearch.action.support.WriteResponse;
-import org.elasticsearch.action.support.replication.ReplicatedWriteRequest;
 import org.elasticsearch.action.support.replication.ReplicationResponse;
 import org.elasticsearch.cluster.action.shard.ShardStateAction;
 import org.elasticsearch.cluster.block.ClusterBlockLevel;
-import org.elasticsearch.cluster.metadata.IndexNameExpressionResolver;
 import org.elasticsearch.cluster.routing.ShardRouting;
 import org.elasticsearch.cluster.service.ClusterService;
 import org.elasticsearch.common.Nullable;
@@ -26,7 +24,6 @@ import org.elasticsearch.index.translog.Translog.Location;
 import org.elasticsearch.indices.IndicesService;
 import org.elasticsearch.primaryaware.PrimaryAwarenessPlugin;
 import org.elasticsearch.threadpool.ThreadPool;
-import org.elasticsearch.transport.TransportResponse;
 import org.elasticsearch.transport.TransportService;
 
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -45,12 +42,11 @@ public abstract class TransportAsyncWriteAction<
 
     protected TransportAsyncWriteAction(Settings settings, String actionName, TransportService transportService,
                                    ClusterService clusterService, IndicesService indicesService, ThreadPool threadPool,
-                                   ShardStateAction shardStateAction, ActionFilters actionFilters,
-                                   IndexNameExpressionResolver indexNameExpressionResolver, Writeable.Reader<Request> request,
+                                   ShardStateAction shardStateAction, ActionFilters actionFilters, Writeable.Reader<Request> request,
                                    Writeable.Reader<ReplicaRequest> replicaRequest, String executor, boolean forceExecutionOnPrimary,
                                    PrimaryAwarenessPlugin.PrimaryAwarenessSettingStore primaryAwarenessSettingStore) {
         super(settings, actionName, transportService, clusterService, indicesService, threadPool, shardStateAction, actionFilters,
-                indexNameExpressionResolver, request, replicaRequest, executor, true, forceExecutionOnPrimary, primaryAwarenessSettingStore);
+                request, replicaRequest, executor, true, forceExecutionOnPrimary, primaryAwarenessSettingStore);
     }
 
     /** Syncs operation result to the translog or throws a shard not available failure */
@@ -102,7 +98,7 @@ public abstract class TransportAsyncWriteAction<
      * async refresh is performed on the <code>replica</code> shard according to the <code>ReplicaRequest</code> refresh policy
      */
     @Override
-    protected abstract WriteReplicaResult<ReplicaRequest> shardOperationOnReplica(
+    protected abstract TransportAsyncWriteAction.WriteReplicaResult<ReplicaRequest> shardOperationOnReplica(
             ReplicaRequest request, IndexShard replica) throws Exception;
 
     /**
@@ -111,12 +107,10 @@ public abstract class TransportAsyncWriteAction<
      * NOTE: public for testing
      */
     public static class WritePrimaryResult<ReplicaRequest extends ReplicatedWriteRequest<ReplicaRequest>,
-            Response extends ReplicationResponse & WriteResponse> extends PrimaryResult<ReplicaRequest, Response>
-            implements RespondingWriteResult {
-        boolean finishedAsyncActions;
+            Response extends ReplicationResponse & WriteResponse> extends PrimaryResult<ReplicaRequest, Response> {
         public final Location location;
         public final IndexShard primary;
-        ActionListener<Response> listener = null;
+        private final Logger logger;
 
         public WritePrimaryResult(ReplicaRequest request, @Nullable Response finalResponse,
                                   @Nullable Location location, @Nullable Exception operationFailure,
@@ -124,103 +118,73 @@ public abstract class TransportAsyncWriteAction<
             super(request, finalResponse, operationFailure);
             this.location = location;
             this.primary = primary;
+            this.logger = logger;
             assert location == null || operationFailure == null
                     : "expected either failure to be null or translog location to be null, " +
                     "but found: [" + location + "] translog location and [" + operationFailure + "] failure";
-            if (operationFailure != null) {
-                this.finishedAsyncActions = true;
+        }
+
+        @Override
+        public void runPostReplicationActions(ActionListener<Void> listener) {
+            if (finalFailure != null) {
+                listener.onFailure(finalFailure);
             } else {
                 /*
-                 * We call this before replication because this might wait for a refresh and that can take a while.
+                 * We call this after replication because this might wait for a refresh and that can take a while.
                  * This way we wait for the refresh in parallel on the primary and on the replica.
                  */
-                new AsyncAfterWriteAction(primary, request, location, this, logger).run();
+                new AsyncAfterWriteAction(primary, replicaRequest, location, new RespondingWriteResult() {
+                    @Override
+                    public void onSuccess(boolean forcedRefresh) {
+                        finalResponseIfSuccessful.setForcedRefresh(forcedRefresh);
+                        listener.onResponse(null);
+                    }
+
+                    @Override
+                    public void onFailure(Exception ex) {
+                        listener.onFailure(ex);
+                    }
+                }, logger).run();
             }
-        }
-
-        @Override
-        public synchronized void respond(ActionListener<Response> listener) {
-            this.listener = listener;
-            respondIfPossible(null);
-        }
-
-        /**
-         * Respond if the refresh has occurred and the listener is ready. Always called while synchronized on {@code this}.
-         */
-        protected void respondIfPossible(Exception ex) {
-            assert Thread.holdsLock(this);
-            if (finishedAsyncActions && listener != null) {
-                if (ex == null) {
-                    super.respond(listener);
-                } else {
-                    listener.onFailure(ex);
-                }
-            }
-        }
-
-        public synchronized void onFailure(Exception exception) {
-            finishedAsyncActions = true;
-            respondIfPossible(exception);
-        }
-
-        @Override
-        public synchronized void onSuccess(boolean forcedRefresh) {
-            finalResponseIfSuccessful.setForcedRefresh(forcedRefresh);
-            finishedAsyncActions = true;
-            respondIfPossible(null);
         }
     }
 
     /**
      * Result of taking the action on the replica.
      */
-    public static class WriteReplicaResult<ReplicaRequest extends ReplicatedWriteRequest<ReplicaRequest>>
-            extends ReplicaResult implements RespondingWriteResult {
+    public static class WriteReplicaResult<ReplicaRequest extends ReplicatedWriteRequest<ReplicaRequest>> extends ReplicaResult {
         public final Location location;
-        boolean finishedAsyncActions;
-        private ActionListener<TransportResponse.Empty> listener;
+        private final ReplicaRequest request;
+        private final IndexShard replica;
+        private final Logger logger;
 
         public WriteReplicaResult(ReplicaRequest request, @Nullable Location location,
                                   @Nullable Exception operationFailure, IndexShard replica, Logger logger) {
             super(operationFailure);
             this.location = location;
-            if (operationFailure != null) {
-                this.finishedAsyncActions = true;
+            this.request = request;
+            this.replica = replica;
+            this.logger = logger;
+        }
+
+        @Override
+        public void runPostReplicaActions(ActionListener<Void> listener) {
+            final Exception finalFailure = this.finalFailure;
+            if (finalFailure != null) {
+                listener.onFailure(finalFailure);
             } else {
-                new AsyncAfterWriteAction(replica, request, location, this, logger).run();
+                new AsyncAfterWriteAction(replica, request, location, new RespondingWriteResult() {
+                    @Override
+                    public void onSuccess(boolean forcedRefresh) {
+                        listener.onResponse(null);
+                    }
+
+                    @Override
+                    public void onFailure(Exception ex) {
+                        listener.onFailure(ex);
+                    }
+                }, logger).run();
             }
-        }
-
-        @Override
-        public synchronized void respond(ActionListener<TransportResponse.Empty> listener) {
-            this.listener = listener;
-            respondIfPossible(null);
-        }
-
-        /**
-         * Respond if the refresh has occurred and the listener is ready. Always called while synchronized on {@code this}.
-         */
-        protected void respondIfPossible(Exception ex) {
-            assert Thread.holdsLock(this);
-            if (finishedAsyncActions && listener != null) {
-                if (ex == null) {
-                    super.respond(listener);
-                } else {
-                    listener.onFailure(ex);
-                }
-            }
-        }
-
-        @Override
-        public synchronized void onFailure(Exception ex) {
-            finishedAsyncActions = true;
-            respondIfPossible(ex);
-        }
-
-        @Override
-        public synchronized void onSuccess(boolean forcedRefresh) {
-            finishedAsyncActions = true;
-            respondIfPossible(null);
         }
     }
 
@@ -235,7 +199,7 @@ public abstract class TransportAsyncWriteAction<
     }
 
     /**
-     * callback used by {@link AsyncAfterWriteAction} to notify that all post
+     * callback used by {@link org.elasticsearch.primaryaware.action.support.replication.TransportAsyncWriteAction.AsyncAfterWriteAction} to notify that all post
      * process actions have been executed
      */
     interface RespondingWriteResult {
@@ -351,7 +315,7 @@ public abstract class TransportAsyncWriteAction<
      * replicas, where a failure to execute the operation should fail
      * the replica shard and/or mark the replica as stale.
      *
-     * This extends {@code TransportReplicationAction.ReplicasProxy} to do the
+     * This extends {@code TransportAsyncReplicationAction.ReplicasProxy} to do the
      * failing and stale-ing.
      */
     class WriteActionReplicasProxy extends ReplicasProxy {
@@ -372,3 +336,4 @@ public abstract class TransportAsyncWriteAction<
         }
     }
 }
+

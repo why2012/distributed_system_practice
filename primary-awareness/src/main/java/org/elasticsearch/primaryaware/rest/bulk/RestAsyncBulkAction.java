@@ -1,21 +1,18 @@
 package org.elasticsearch.primaryaware.rest.bulk;
 
 import org.apache.logging.log4j.LogManager;
-import org.elasticsearch.primaryaware.action.bulk.AsyncBulkAction;
-import org.elasticsearch.action.bulk.BulkRequest;
 import org.elasticsearch.action.bulk.BulkShardRequest;
 import org.elasticsearch.action.support.ActiveShardCount;
-import org.elasticsearch.client.Requests;
 import org.elasticsearch.client.node.NodeClient;
 import org.elasticsearch.common.logging.DeprecationLogger;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.index.mapper.MapperService;
+import org.elasticsearch.primaryaware.action.bulk.AsyncBulkAction;
+import org.elasticsearch.primaryaware.action.bulk.BulkRequest;
 import org.elasticsearch.rest.BaseRestHandler;
-import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestStatusToXContentListener;
 import org.elasticsearch.rest.action.document.RestBulkAction;
-import org.elasticsearch.rest.action.search.RestSearchAction;
 import org.elasticsearch.search.fetch.subphase.FetchSourceContext;
 
 import java.io.IOException;
@@ -33,17 +30,20 @@ public class RestAsyncBulkAction extends BaseRestHandler {
     public static final String TYPES_DEPRECATION_MESSAGE = "[types removal]" +
             " Specifying types in bulk requests is deprecated.";
 
-    public RestAsyncBulkAction(Settings settings, RestController controller) {
-        super(settings);
+    public RestAsyncBulkAction(Settings settings) {
         this.allowExplicitIndex = MULTI_ALLOW_EXPLICIT_INDEX.get(settings);
-        controller.registerHandler(POST, "/_async_bulk", this);
-        controller.registerHandler(PUT, "/_async_bulk", this);
-        controller.registerHandler(POST, "/{index}/_async_bulk", this);
-        controller.registerHandler(PUT, "/{index}/_async_bulk", this);
+    }
 
-        // Deprecated typed endpoints.
-        controller.registerHandler(POST, "/{index}/{type}/_async_bulk", this);
-        controller.registerHandler(PUT, "/{index}/{type}/_async_bulk", this);
+    @Override
+    public List<Route> routes() {
+        return unmodifiableList(asList(
+                new Route(POST, "/_async_bulk"),
+                new Route(PUT, "/_async_bulk"),
+                new Route(POST, "/{index}/_async_bulk"),
+                new Route(PUT, "/{index}/_async_bulk"),
+                // Deprecated typed endpoints.
+                new Route(POST, "/{index}/{type}/_async_bulk"),
+                new Route(PUT, "/{index}/{type}/_async_bulk")));
     }
 
     @Override
@@ -53,7 +53,7 @@ public class RestAsyncBulkAction extends BaseRestHandler {
 
     @Override
     public RestChannelConsumer prepareRequest(final RestRequest request, final NodeClient client) throws IOException {
-        BulkRequest bulkRequest = Requests.bulkRequest();
+        BulkRequest bulkRequest = new BulkRequest();
         String defaultIndex = request.param("index");
         String defaultType = request.param("type");
         if (defaultType == null) {
@@ -78,6 +78,11 @@ public class RestAsyncBulkAction extends BaseRestHandler {
 
     @Override
     public boolean supportsContentStream() {
+        return true;
+    }
+
+    @Override
+    public boolean allowsUnsafeBuffers() {
         return true;
     }
 }

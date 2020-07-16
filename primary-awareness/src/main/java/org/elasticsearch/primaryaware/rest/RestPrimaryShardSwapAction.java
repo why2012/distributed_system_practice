@@ -1,11 +1,9 @@
 package org.elasticsearch.primaryaware.rest;
 
 import org.elasticsearch.client.node.NodeClient;
-import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.primaryaware.PrimaryAwarenessPlugin;
 import org.elasticsearch.primaryaware.action.PrimaryShardSwapAction;
 import org.elasticsearch.rest.BaseRestHandler;
-import org.elasticsearch.rest.RestController;
 import org.elasticsearch.rest.RestRequest;
 import org.elasticsearch.rest.action.RestToXContentListener;
 
@@ -20,17 +18,18 @@ public class RestPrimaryShardSwapAction extends BaseRestHandler {
 
     private PrimaryAwarenessPlugin.PrimaryAwarenessSettingStore primaryAwarenessSettingStore;
 
-    public RestPrimaryShardSwapAction(
-            Settings settings, RestController controller,
-            PrimaryAwarenessPlugin.PrimaryAwarenessSettingStore primaryAwarenessSettingStore) {
-        super(settings);
+    public RestPrimaryShardSwapAction(PrimaryAwarenessPlugin.PrimaryAwarenessSettingStore primaryAwarenessSettingStore) {
         this.primaryAwarenessSettingStore = primaryAwarenessSettingStore;
-        controller.registerHandler(POST, "/_cluster/_primary_forceswap", this);
     }
 
     @Override
     public String getName() {
         return "primary_shard_forceswap_action";
+    }
+
+    @Override
+    public List<Route> routes() {
+        return singletonList(new Route(POST, "/_cluster/_primary_forceswap"));
     }
 
     @Override

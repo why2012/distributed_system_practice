@@ -13,15 +13,15 @@
     <inceptionYear>2020</inceptionYear>
 
     <properties>
-        <elasticsearch.version>7.3.2</elasticsearch.version>
+        <elasticsearch.version>7.7.0</elasticsearch.version>
         <maven.compiler.target>1.8</maven.compiler.target>
         <elasticsearch.assembly.descriptor>${project.basedir}/src/main/assemblies/plugin.xml</elasticsearch.assembly.descriptor>
         <elasticsearch.plugin.name>primary-awareness</elasticsearch.plugin.name>
         <elasticsearch.plugin.classname>org.elasticsearch.primaryaware.PrimaryAwarenessPlugin</elasticsearch.plugin.classname>
 
-        <plugin.install.dirs.alpha>E:/elasticsearch/elasticsearch-7.3.2-cluster/elasticsearch-7.3.2-node1/plugins</plugin.install.dirs.alpha>
-        <plugin.install.dirs.beta>E:/elasticsearch/elasticsearch-7.3.2-cluster/elasticsearch-7.3.2-node2/plugins</plugin.install.dirs.beta>
-        <plugin.install.dirs.gamma>E:/elasticsearch/elasticsearch-7.3.2-cluster/elasticsearch-7.3.2-node3/plugins</plugin.install.dirs.gamma>
+        <plugin.install.dirs.alpha>D:/桌面/ES/workspace/es-home-alpha/plugins</plugin.install.dirs.alpha>
+        <plugin.install.dirs.beta>D:/桌面/ES/workspace/es-home-beta/plugins</plugin.install.dirs.beta>
+        <plugin.install.dirs.gamma>D:/桌面/ES/workspace/es-home-gamma/plugins</plugin.install.dirs.gamma>
     </properties>
 
     <licenses>

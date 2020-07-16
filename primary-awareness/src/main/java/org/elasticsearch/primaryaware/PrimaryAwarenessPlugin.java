@@ -71,8 +71,8 @@ public class PrimaryAwarenessPlugin extends Plugin implements ActionPlugin, Clus
             return Collections.emptyList();
         }
         return Arrays.asList(
-                new RestPrimaryShardSwapAction(settings, restController, primaryAwarenessSettingStore),
-                new RestAsyncBulkAction(settings, restController));
+                new RestPrimaryShardSwapAction(primaryAwarenessSettingStore),
+                new RestAsyncBulkAction(settings));
     }
 
     @Override
@@ -99,7 +99,8 @@ public class PrimaryAwarenessPlugin extends Plugin implements ActionPlugin, Clus
     public Collection<Object> createComponents(Client client, ClusterService clusterService, ThreadPool threadPool,
                                                ResourceWatcherService resourceWatcherService, ScriptService scriptService,
                                                NamedXContentRegistry xContentRegistry, Environment environment,
-                                               NodeEnvironment nodeEnvironment, NamedWriteableRegistry namedWriteableRegistry) {
+                                               NodeEnvironment nodeEnvironment, NamedWriteableRegistry namedWriteableRegistry,
+                                               IndexNameExpressionResolver indexNameExpressionResolver) {
         this.clusterService = clusterService;
         primaryForceswapTrigger = new PrimaryForceswapTrigger(clusterService, primarySwapClusterStateTaskExecutor, logger);
         return Collections.emptyList();
