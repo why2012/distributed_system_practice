@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<configuration status="INFO" monitorInterval="600">
+
+  <Properties>
+    <!-- %t:输出线程名   %-5level:输出日志级别（5个字符）   %logger{80}:输出logger名字，rot没有名字不输出  %M:输出方法名 %L:输出代码行-->
+    <property name="PATTERN">%d{MM-dd HH:mm:ss.SSS} [%t] %-5level %logger{80} %C:%M:%L %msg%n
+    </property>
+  </Properties>
+
+
+  <appenders>
+    <Console name="console" target="SYSTEM_OUT">
+      <PatternLayout pattern="${PATTERN}"/>
+      <!-- 打印debug以上级别 -->
+      <ThresholdFilter level="debug" onMatch="ACCEPT" onMismatch="DENY"/>
+    </Console>
+
+    <RollingRandomAccessFile name="file_debug" fileName="logs/debug.log"
+      filePattern="logs/$${date:yyyy-MM-dd}/debug-%d{dd}-%i.log.gz">
+      <PatternLayout>
+        <Pattern>${PATTERN}</Pattern>
+      </PatternLayout>
+      <!-- 打印debug -->
+      <Filters>
+        <!-- NEUTRAL:中立 -->
+        <ThresholdFilter level="info" onMatch="DENY" onMismatch="NEUTRAL"/>
+        <ThresholdFilter level="error" onMatch="DENY" onMismatch="NEUTRAL"/>
+        <ThresholdFilter level="warn" onMatch="DENY" onMismatch="NEUTRAL"/>
+        <ThresholdFilter level="debug" onMatch="ACCEPT" onMismatch="DENY"/>
+      </Filters>
+      <Policies>
+        <TimeBasedTriggeringPolicy/>
+        <SizeBasedTriggeringPolicy size="50 MB"/>
+      </Policies>
+      <!-- DefaultRolloverStrategy属性如不设置，则默认为最多同一文件夹下7个文件，这里设置了20 -->
+      <DefaultRolloverStrategy max="20">
+        <Delete basePath="logs" maxDepth="2">
+          <IfFileName glob="*/debug*.log.gz"/>
+          <IfLastModified age="5d"/>
+        </Delete>
+      </DefaultRolloverStrategy>
+    </RollingRandomAccessFile>
+
+    <RollingRandomAccessFile name="file_info" fileName="logs/info.log"
+      filePattern="logs/$${date:yyyy-MM-dd}/info-%d{dd}-%i.log.gz">
+      <PatternLayout>
+        <Pattern>${PATTERN}</Pattern>
+      </PatternLayout>
+      <!-- 打印info -->
+      <Filters>
+        <ThresholdFilter level="error" onMatch="DENY" onMismatch="NEUTRAL"/>
+        <ThresholdFilter level="warn" onMatch="DENY" onMismatch="NEUTRAL"/>
+        <ThresholdFilter level="info" onMatch="ACCEPT" onMismatch="DENY"/>
+      </Filters>
+      <Policies>
+        <TimeBasedTriggeringPolicy/>
+        <SizeBasedTriggeringPolicy size="50 MB"/>
+      </Policies>
+      <DefaultRolloverStrategy max="20">
+        <Delete basePath="logs" maxDepth="2">
+          <IfFileName glob="*/info*.log.gz"/>
+          <IfLastModified age="5d"/>
+        </Delete>
+      </DefaultRolloverStrategy>
+    </RollingRandomAccessFile>
+
+    <RollingRandomAccessFile name="file_warn" fileName="logs/warn.log"
+      filePattern="logs/$${date:yyyy-MM-dd}/warn-%d{dd}-%i.log.gz">
+      <PatternLayout>
+        <Pattern>${PATTERN}</Pattern>
+      </PatternLayout>
+      <!-- 打印warn -->
+      <Filters>
+        <ThresholdFilter level="error" onMatch="DENY" onMismatch="NEUTRAL"/>
+        <ThresholdFilter level="warn" onMatch="ACCEPT" onMismatch="DENY"/>
+      </Filters>
+      <Policies>
+        <TimeBasedTriggeringPolicy/>
+        <SizeBasedTriggeringPolicy size="50 MB"/>
+      </Policies>
+      <DefaultRolloverStrategy max="20">
+        <Delete basePath="logs" maxDepth="2">
+          <IfFileName glob="*/warn*.log.gz"/>
+          <IfLastModified age="5d"/>
+        </Delete>
+      </DefaultRolloverStrategy>
+    </RollingRandomAccessFile>
+
+    <RollingRandomAccessFile name="file_error" fileName="logs/error.log"
+      filePattern="logs/$${date:yyyy-MM-dd}/error-%d{dd}-%i.log.gz">
+      <PatternLayout>
+        <Pattern>${PATTERN}</Pattern>
+      </PatternLayout>
+      <!-- 打印debug -->
+      <ThresholdFilter level="error" onMatch="ACCEPT" onMismatch="DENY"/>
+      <Policies>
+        <TimeBasedTriggeringPolicy/>
+        <SizeBasedTriggeringPolicy size="50 MB"/>
+      </Policies>
+      <DefaultRolloverStrategy max="20">
+        <Delete basePath="logs" maxDepth="2">
+          <IfFileName glob="*/error*.log.gz"/>
+          <IfLastModified age="5d"/>
+        </Delete>
+      </DefaultRolloverStrategy>
+    </RollingRandomAccessFile>
+
+    <RollingRandomAccessFile name="message" fileName="logs/message.log"
+      filePattern="logs/$${date:yyyy-MM-dd}/message-%d{dd}-%i.log.gz">
+      <PatternLayout>
+        <Pattern>${PATTERN}</Pattern>
+      </PatternLayout>
+      <!-- 打印debug -->
+      <ThresholdFilter level="info" onMatch="ACCEPT" onMismatch="DENY"/>
+      <Policies>
+        <TimeBasedTriggeringPolicy/>
+        <SizeBasedTriggeringPolicy size="50 MB"/>
+      </Policies>
+      <DefaultRolloverStrategy max="20">
+        <Delete basePath="logs" maxDepth="2">
+          <IfFileName glob="*/message*.log.gz"/>
+          <IfLastModified age="5d"/>
+        </Delete>
+      </DefaultRolloverStrategy>
+    </RollingRandomAccessFile>
+
+
+  </appenders>
+
+  <loggers>
+
+    <logger name="loggerAdapter" additivity="false">
+      <appender-ref ref="message"/>
+    </logger>
+
+    <!-- additivity:false 只在自己的logger输出,父logger不会输出 -->
+    <root level="info">
+      <appender-ref ref="file_debug"/>
+      <appender-ref ref="file_info"/>
+      <appender-ref ref="file_warn"/>
+      <appender-ref ref="file_error"/>
+      <appender-ref ref="console"/>
+    </root>
+    <logger name="org.hibernate.engine.internal.StatisticalLoggingSessionEventListener"
+      level="error"/>
+    <logger name="org.springframework.session.data.redis.RedisSessionExpirationPolicy"
+      level="fatal"/>
+  </loggers>
+</configuration>
